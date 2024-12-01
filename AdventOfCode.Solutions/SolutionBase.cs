@@ -83,8 +83,9 @@ public abstract class SolutionBase
 
     string LoadInput(bool debug = false)
     {
-        var inputFilepath =
-            $"./AdventOfCode.Solutions/Year{Year}/Day{Day:D2}/{(debug ? "debug" : "input")}";
+        var inputFilepath = Debugger.IsAttached 
+            ? $"../../../AdventOfCode.Solutions/Year{Year}/Day{Day:D2}/{(debug ? "debug" : "input")}"
+            : $"./AdventOfCode.Solutions/Year{Year}/Day{Day:D2}/{(debug ? "debug" : "input")}";
 
         if (File.Exists(inputFilepath) && new FileInfo(inputFilepath).Length > 0)
         {
