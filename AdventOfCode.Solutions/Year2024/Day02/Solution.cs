@@ -26,37 +26,42 @@ class Solution : SolutionBase
     protected override string SolvePartTwo()
     {
         List<string> reports = Input.SplitByNewline().ToList();
-        int 
-            safeReportCountNormal = 0;
+        int safeReportCount = 0;
 
         for (int i = 0; i < reports.Count; i++)
         {
             List<int> levels = reports[i].Split(' ').Select(int.Parse).ToList();
             int firstBadIndex = IsReportGood(levels);
-
-            List<int> temp = levels.Select(x => x).Reverse().ToList();
-            int secndBadIndex = IsReportGood(temp);
             if (firstBadIndex == -1)
             {
-                safeReportCountNormal++;
+                safeReportCount++;
                 continue;
             }
 
             //Input line 25: [12] 10 11 13 15 18 20 - remove 12 and this becomes valid
+            List<int> original = levels.Select(x => x).ToList();
 
-            //Remove first identified index and check
-            levels.RemoveAt(firstBadIndex);
-            if (IsReportGood(levels) == -1)
+            //BRUTE FORCE IT - if the first pass is bad, then try removing each level to check all possibilities
+            for (int j = 0; j < original.Count; j++)
             {
-                safeReportCountNormal++;
-                continue;
+                levels.RemoveAt(j);
+
+                if (IsReportGood(levels) == -1)
+                {
+                    safeReportCount++;
+                    break;
+                }
+
+                //If the report still isn't good, restore it before the next iteration
+                levels = original.Select(x => x).ToList();
             }
         }
 
         //Attempt 1: 439 - Too high
         //Attempt 2: 301 - Too low
         //Attempt 3: 303 - Too low
-        return safeReportCountNormal.ToString();
+        //Attempt 4: 308 - CORRECT
+        return safeReportCount.ToString();
     }
 
     private int IsReportGood(List<int> levels)
