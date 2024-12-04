@@ -1,3 +1,5 @@
+using System.Drawing;
+
 namespace AdventOfCode.Solutions.Year2024.Day04;
 
 class Solution : SolutionBase
@@ -7,25 +9,15 @@ class Solution : SolutionBase
     protected override string SolvePartOne()
     {
         List<string> wordRows = Input.SplitByNewline().ToList();
+        char[][] wordSearch = CreateGrid(wordRows); 
 
-        char[][] wordSearch = new char[wordRows.Count][];
-
-        for (int i = 0; i < wordRows.Count; i++)
-        {
-            wordSearch[i] = wordRows[i].ToCharArray();
-        }
-
+        List<Point> points = FindX(wordSearch);
         int instancesFound = 0;
-        foreach (char[] item in wordSearch)
+
+        foreach (Point item in points)
         {
-            string r = item.JoinAsStrings();
-            instancesFound += SearchForward(r);
-            instancesFound += SearchBackward(r);
+            instancesFound += Search(wordSearch, item);
         }
-
-        char[][] rotatedWordSearch = RotateWordSearch(wordSearch);
-
-
 
         return instancesFound.ToString();
     }
@@ -35,6 +27,57 @@ class Solution : SolutionBase
         List<string> reports = Input.SplitByNewline().ToList();
 
         return "";
+    }
+
+    private char[][] CreateGrid(List<string> wordRows)
+    {
+        char[][] wordSearch = new char[wordRows.Count][];
+        for (int i = 0; i < wordRows.Count; i++)
+        {
+            wordSearch[i] = wordRows[i].ToCharArray();
+        }
+        return wordSearch;
+    }
+
+    private List<Point> FindX(char[][] grid)
+    {
+        List<Point> points = new List<Point>();
+        for (int y = 0; y < grid.Length; y++)
+        {
+            for (int x = 0; x < grid[y].Length; x++)
+            {
+                if (grid[x][y] == 'X')
+                    points.Add(new Point(x,y));
+            }
+        }
+        return points;
+    }
+
+    private int Search(char[][] grid, Point coordinate)
+    {
+        int xmasFound = 0;
+
+        //Up
+        if(coordinate.Y == 0)
+        {
+            
+        }
+
+        //Up-Right
+
+        //Right
+
+        //Down-Right
+
+        //Down
+
+        //Down-Left
+
+        //Left
+
+        //Up-Left
+
+        return xmasFound;
     }
 
     private int SearchForward(string row)
@@ -73,20 +116,6 @@ class Solution : SolutionBase
         }
 
         return found;
-    }
-
-    private char[][] RotateWordSearch(char[][] ws)
-    {
-        char[][] rotated = new char[ws.Length][];
-        string[] assembledRows = new string[ws.Length];
-        for (int j = ws.Length - 1; j > 0; j--)
-        {
-            for (int i = 0; i < ws.Length; i++)
-            {
-                assembledRows[i] = assembledRows[i] += ws[i][j];
-            }
-        }
-        return rotated;
     }
 
 }
