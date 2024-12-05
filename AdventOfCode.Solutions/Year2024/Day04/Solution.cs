@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace AdventOfCode.Solutions.Year2024.Day04;
@@ -7,16 +9,15 @@ class Solution : SolutionBase
 {
     public Solution() : base(04, 2024, "") { }
 
-
-    const int MIN = 0;
-    const int MAX = 9;
+    public int MIN { get; } = 0;
+    public int MAX { get { return Debug ? 9 : 139; } }
 
     protected override string SolvePartOne()
     {
         List<string> wordRows = Input.SplitByNewline().ToList();
         char[][] wordSearch = CreateGrid(wordRows);
 
-        List<Point> points = FindX(wordSearch);
+        List<Point> points = FindChar(wordSearch, 'X');
         int instancesFound = 0;
 
         foreach (Point item in points)
@@ -30,16 +31,34 @@ class Solution : SolutionBase
             instancesFound += SearchLeft(wordSearch, item);
             instancesFound += SearchUpLeft(wordSearch, item);
         }
-
-        //Attempt 1: 987 - Too low
+        //Attempt 1: 987 - Too low - wrong MAX size
+        //Attempt 2: 2573 - CORRECT
         return instancesFound.ToString();
     }
 
     protected override string SolvePartTwo()
     {
-        List<string> reports = Input.SplitByNewline().ToList();
+        List<string> wordRows = Input.SplitByNewline().ToList();
+        char[][] wordSearch = CreateGrid(wordRows);
 
-        return "";
+        List<Point> points = FindChar(wordSearch, 'A');
+        int instancesFound = 0;
+
+        foreach (Point item in points)
+        {
+            string letters = "";
+            letters += SearchUpRightOne(wordSearch, item);
+            letters += SearchDownRightOne(wordSearch, item);
+            letters += SearchDownLeftOne(wordSearch, item);
+            letters += SearchUpLeftOne(wordSearch, item);
+
+            //letters.Sum(c => c) == 320
+            if (string.Concat(letters.OrderBy(c => c)) == "MMSS")
+                instancesFound++;
+        }
+
+        //Attempt 1: 1916 - Too high & right for someone else
+        return instancesFound.ToString();
     }
 
     private char[][] CreateGrid(List<string> wordRows)
@@ -52,14 +71,14 @@ class Solution : SolutionBase
         return wordSearch;
     }
 
-    private List<Point> FindX(char[][] grid)
+    private List<Point> FindChar(char[][] grid, char charToFind)
     {
         List<Point> points = new List<Point>();
         for (int y = 0; y < grid.Length; y++)
         {
             for (int x = 0; x < grid[y].Length; x++)
             {
-                if (grid[y][x] == 'X')
+                if (grid[y][x] == charToFind)
                     points.Add(new Point(x, y));
             }
         }
@@ -97,9 +116,9 @@ class Solution : SolutionBase
 
             if (grid[nextY][nextX].Equals(examineChar) == false)
                 return xmasFound;
-            else if(i == 2)
+            else if (i == 2)
                 xmasFound++;
-            
+
             nextY--;
             if (nextY < MIN)
                 return xmasFound;
@@ -107,6 +126,7 @@ class Solution : SolutionBase
 
         return xmasFound;
     }
+
 
     private int SearchUpRight(char[][] grid, Point coordinate)
     {
@@ -148,6 +168,22 @@ class Solution : SolutionBase
         }
 
         return xmasFound;
+    }
+
+    private char SearchUpRightOne(char[][] grid, Point coordinate)
+    {
+        char retVal = char.MinValue;
+
+        int nextX = coordinate.X + 1;   //Right
+        int nextY = coordinate.Y - 1;   //Up
+
+        //Make sure we aren't at the edge
+        if (nextX > MAX || nextY < MIN)
+            return retVal;
+        else
+            retVal = grid[nextY][nextX];
+
+        return retVal;
     }
 
     private int SearchRight(char[][] grid, Point coordinate)
@@ -232,6 +268,22 @@ class Solution : SolutionBase
         }
 
         return xmasFound;
+    }
+
+    private char SearchDownRightOne(char[][] grid, Point coordinate)
+    {
+        char retVal = char.MinValue;
+
+        int nextX = coordinate.X + 1;   //Right
+        int nextY = coordinate.Y + 1;   //Down
+
+        //Make sure we aren't at the edge
+        if (nextX > MAX || nextY > MAX)
+            return retVal;
+        else
+            retVal = grid[nextY][nextX];
+
+        return retVal;
     }
 
     private int SearchDown(char[][] grid, Point coordinate)
@@ -319,6 +371,22 @@ class Solution : SolutionBase
         return xmasFound;
     }
 
+    private char SearchDownLeftOne(char[][] grid, Point coordinate)
+    {
+        char retVal = char.MinValue;
+
+        int nextX = coordinate.X - 1;   //Left
+        int nextY = coordinate.Y + 1;   //Down
+
+        //Make sure we aren't at the edge
+        if (nextX < MIN || nextY > MAX)
+            return retVal;
+        else
+            retVal = grid[nextY][nextX];
+
+        return retVal;
+    }
+
     private int SearchLeft(char[][] grid, Point coordinate)
     {
         int xmasFound = 0;
@@ -402,6 +470,22 @@ class Solution : SolutionBase
         }
 
         return xmasFound;
+    }
+
+    private char SearchUpLeftOne(char[][] grid, Point coordinate)
+    {
+        char retVal = char.MinValue;
+
+        int nextX = coordinate.X - 1;   //Left
+        int nextY = coordinate.Y - 1;   //Up
+
+        //Make sure we aren't at the edge
+        if (nextX < MIN || nextY < MIN)
+            return retVal;
+        else
+            retVal = grid[nextY][nextX];
+
+        return retVal;
     }
 
 
