@@ -46,18 +46,22 @@ class Solution : SolutionBase
 
         foreach (Point item in points)
         {
-            string letters = "";
-            letters += SearchUpRightOne(wordSearch, item);
-            letters += SearchDownRightOne(wordSearch, item);
-            letters += SearchDownLeftOne(wordSearch, item);
-            letters += SearchUpLeftOne(wordSearch, item);
+            string d1 = "", d2 = "";
+            d1 += SearchUpRightOne(wordSearch, item);
+            d1 += SearchDownLeftOne(wordSearch, item);
 
-            //letters.Sum(c => c) == 320
-            if (string.Concat(letters.OrderBy(c => c)) == "MMSS")
+            d2 += SearchDownRightOne(wordSearch, item);
+            d2 += SearchUpLeftOne(wordSearch, item);
+
+            // 'M' = 77, 'S' = 83 - "MAS" without the 'A' would be equal to 160
+            // also works by ordering chars and checking if equal to "MS"
+            if (d1.Sum(c => c) == 160 && d2.Sum(c => c) == 160)
+                //if (string.Concat(d1.OrderBy(c => c)) == "MS" && string.Concat(d2.OrderBy(c => c)) == "MS")
                 instancesFound++;
         }
 
-        //Attempt 1: 1916 - Too high & right for someone else
+        //Attempt 1: 1916 - Too high & right for someone else - evaluation criteria incorrect, MAM and SAS were considered valid diagonals
+        //Attempt 2: 1850 - CORRECT
         return instancesFound.ToString();
     }
 
