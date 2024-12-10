@@ -3,6 +3,7 @@
 using System.Collections.ObjectModel;
 using System.IO.IsolatedStorage;
 using System.Net;
+using System.Runtime.InteropServices;
 
 namespace AdventOfCode.Solutions.Year2024.Day07;
 
@@ -14,9 +15,9 @@ class Solution : SolutionBase
     {
         List<string> lines = Input.SplitByNewline().ToList();
 
-        Dictionary<ulong, List<ulong>> calibrationData = ParseCalibrationData(lines);
-        Dictionary<ulong, bool> validCalibrationData = DetermineCalDataValid(calibrationData);
-        ulong totalSum = GetFinalCalData(validCalibrationData);
+        Dictionary<long, List<long>> calibrationData = ParseCalibrationData(lines);
+        Dictionary<long, bool> validCalibrationData = DetermineCalDataValid(calibrationData, 2);
+        long totalSum = GetFinalCalData(validCalibrationData);
 
         //Attempt 1: 424 - Too low - didn't sum the valid calibration data
         //Attempt 2: 1582598718861 - CORRECT
@@ -27,36 +28,86 @@ class Solution : SolutionBase
     {
         List<string> lines = Input.SplitByNewline().ToList();
 
-        Dictionary<ulong, List<ulong>> calibrationData = ParseCalibrationData(lines);
-        Dictionary<ulong, bool> validCalibrationData = DetermineCalDataValid(calibrationData);
+        Dictionary<long, List<long>> calibrationData = ParseCalibrationData(lines);
+        Dictionary<long, bool> validCalibrationData = DetermineCalDataValid(calibrationData, 2);
+        //long totalSum1 = GetFinalCalData(validCalibrationData);
 
-        //Get only the invalid calibration data
-        Dictionary<ulong, bool> invalidCalibrationData = validCalibrationData.Where(x => x.Value == false).Select(t => new { t.Key, t.Value }).ToDictionary(t => t.Key, t=> t.Value);
-        Dictionary<ulong, List<ulong>> calibrationData2 = new();
+        ////Get only the invalid calibration data
+        //Dictionary<long, bool> invalidCalibrationData = validCalibrationData.Where(x => x.Value == false).Select(t => new { t.Key, t.Value }).ToDictionary(t => t.Key, t => t.Value);
+        //Dictionary<long, List<long>> calibrationData2 = new();
 
-        foreach (var item in invalidCalibrationData.Keys)
+        //foreach (var item in invalidCalibrationData.Keys)
+        //{
+        //    calibrationData2.Add(item, calibrationData[item]);
+        //}
+
+        ////Now go try concatentating on this data
+        //Dictionary<long, bool> validCalibrationData2 = DetermineCalDataValid(calibrationData2, 3);
+        //long totalSum2 = GetFinalCalData(validCalibrationData2);
+
+        long sum = 0;
+        foreach (long item in calibrationData.Keys)
         {
-            calibrationData2.Add(item, calibrationData[item]);
+            long[] numbers = calibrationData[item].ToArray();
+            sum += solve(item, numbers.First(), numbers, 1, 3);
         }
 
-        //Now go try concatentating on this data
-        Dictionary<ulong, bool> validCalibrationData2 = DetermineCalDataValid(calibrationData2);
 
-        return "";
+        //Attempt 1 - 163693637141019 - too low - didn't add the two total sum values together
+        //Attempt 2 - 165276235859880 - too low 
+        //Attempt 3 - 165278151522644 - CORRECT using solve()
+        return (sum).ToString();
     }
 
-    private Dictionary<ulong, List<ulong>> ParseCalibrationData(List<string> lines)
+    private long solve(long lhs, long total, long[] rhs, int ri, int ops)
     {
-        Dictionary<ulong, List<ulong>> calibrationData = new();
+        if (lhs == total && rhs.Length == ri)
+        {
+            return total;
+        }
+        else if (rhs.Length == ri)
+        {
+            return 0;
+        }
+        else if (total > lhs)
+        {
+            return 0;
+        }
+        else
+        {
+            long result = solve(lhs, total + rhs[ri], rhs, ri + 1, ops);
+            if (result == lhs)
+            {
+                return lhs;
+            }
+            result = solve(lhs, total * rhs[ri], rhs, ri + 1, ops);
+            if (result == lhs)
+            {
+                return lhs;
+            }
+            if (ops == 3)
+            {
+                return solve(lhs, long.Parse(total + "" + rhs[ri]), rhs, ri + 1, ops);
+            }
+            else
+            {
+                return 0;
+            }
+        }
+    }
+
+    private Dictionary<long, List<long>> ParseCalibrationData(List<string> lines)
+    {
+        Dictionary<long, List<long>> calibrationData = new();
         foreach (string line in lines)
         {
             string[] theSplit = line.Trim().Split(":");
-            ulong answer = ulong.Parse(theSplit[0]);
+            long answer = long.Parse(theSplit[0]);
             string[] theNums = theSplit.Last().Trim().Split(" ");
-            List<ulong> numLst = new List<ulong>();
+            List<long> numLst = new List<long>();
             foreach (string item in theNums)
             {
-                numLst.Add(ulong.Parse(item));
+                numLst.Add(long.Parse(item));
             }
 
             calibrationData.Add(answer, numLst);
@@ -64,9 +115,9 @@ class Solution : SolutionBase
         return calibrationData;
     }
 
-    private Dictionary<ulong, bool> DetermineCalDataValid(Dictionary<ulong, List<ulong>> calibrationData)
+    private Dictionary<long, bool> DetermineCalDataValid(Dictionary<long, List<long>> calibrationData, int baseNumber)
     {
-        Dictionary<ulong, bool> valid = new Dictionary<ulong, bool>();
+        Dictionary<long, bool> valid = new Dictionary<long, bool>();
 
         //Default all lines to false
         foreach (var item in calibrationData)
@@ -74,9 +125,9 @@ class Solution : SolutionBase
             valid.Add(item.Key, false);
         }
 
-        foreach (ulong item in calibrationData.Keys)
+        foreach (long item in calibrationData.Keys)
         {
-            List<ulong> numbers = calibrationData[item];
+            List<long> numbers = calibrationData[item];
             int spaces = numbers.Count - 1;
 
             //Make a bit array with the length equal to the number of (operator) spaces between numbers
@@ -84,15 +135,14 @@ class Solution : SolutionBase
             // TRUE (1) will represent a multiplication operation
             ushort tracker = 0;
             char[] theChars;
-            double max = Math.Pow(2, spaces);
+            double max = Math.Pow(baseNumber, spaces);
             for (int i = 0; i < max; i++)
             {
-                theChars = DetermineCharArrayFromUShort(tracker, spaces);
+                theChars = DetermineCharArray(tracker, baseNumber, spaces);
 
                 //Perform the operation with the current set of operators
-                ulong operationAnswer = 0;
+                long operationAnswer = 0;
                 GetAnswer(theChars, numbers, out operationAnswer);
-
 
                 //If the answer from the operation matches the expected answer (the key)
                 //set the boolean flag to true and break out of the inner for loop
@@ -111,24 +161,33 @@ class Solution : SolutionBase
         return valid;
     }
 
-    private void GetAnswer(char[] theChars, List<ulong> numbers, out ulong operationAnswer)
+    private void GetAnswer(char[] theChars, List<long> numbers, out long operationAnswer)
     {
         //Operators are always evaluated left-to-right, not according to precedence rules
         //because of this rule - set the initial value of operationAnswer to the first number of the list        
-        operationAnswer = (ulong)numbers.FirstOrDefault();
+        operationAnswer = (long)numbers.FirstOrDefault();
         for (int i = 0; i < theChars.Length; i++)
         {
-            if (theChars[i].Equals('+'))
-                operationAnswer += numbers[i + 1];
-            else
-                operationAnswer *= numbers[i + 1];
+            switch(theChars[i])
+            {
+                case '+':
+                    operationAnswer += numbers[i + 1];
+                    break;
+                case '*':
+                    operationAnswer *= numbers[i + 1];
+                    break;
+                case '|':
+                    string newConcat = string.Concat(operationAnswer.ToString(), numbers[i + 1]);
+                    operationAnswer = long.Parse(newConcat);
+                    break;
+            }
         }
-    }    
+    }
 
-    private ulong GetFinalCalData(Dictionary<ulong, bool> validCalibrationData)
+    private long GetFinalCalData(Dictionary<long, bool> validCalibrationData)
     {
-        ulong totalSum = 0;
-        foreach (ulong item in validCalibrationData.Keys)
+        long totalSum = 0;
+        foreach (long item in validCalibrationData.Keys)
         {
             if (validCalibrationData[item] == true)
                 totalSum += item;
@@ -136,26 +195,54 @@ class Solution : SolutionBase
         return totalSum;
     }
 
-    private char[] DetermineCharArrayFromUShort(ushort trackingNumber, int maxSpaces)
+    private char[] DetermineCharArray(ushort trackingNumber, int baseValue, int maxSpaces)
     {
         int[] newInt = new int[1] { trackingNumber };
-        BitArray bitArray = new BitArray(newInt);
+        List<int> positions = Convert(trackingNumber, baseValue);
+
         char[] c = new char[maxSpaces];
 
         //Only go up to the number of spaces
         for (int i = 0; i < maxSpaces; i++)
         {
-            //When the number is converted to a BitArray
-            //leading bits are dropped, so allow them to be added back 
-            if (i > bitArray.Length)
-            {
+            if (i >= positions.Count())
                 c[i] = '+';
-            }
             else
-                c[i] = bitArray[i] ? '*' : '+';
+                c[i] = positions[i] == 0 ? '+' : positions[i] == 1 ? '*' : '|';
         }
 
         return c;
+    }
+
+    private List<int> Convert(int numberToConvert, int baseValue)
+    {
+        List<int> numericPositions = new List<int>();
+
+        int remainder, quotient = numberToConvert;
+        while(quotient != 0)
+        {
+            convertToTernary(numberToConvert, baseValue, out quotient, out remainder);
+            numberToConvert = quotient;
+            numericPositions.Add(remainder);
+        }
+        return numericPositions;
+    }
+
+    private void convertToTernary(int number, int baseValue, out int quotient, out int remainder)
+    {
+        quotient = 0;
+        remainder = 0;
+        //Stop case - done when number is zero
+        if (number == 0)
+            return;
+
+        //Get remainder 
+        remainder = number % baseValue;
+
+        //Divide by the base 
+        quotient = number / baseValue;
+
+        convertToTernary(quotient, baseValue, out quotient, out remainder);
     }
 
 }
