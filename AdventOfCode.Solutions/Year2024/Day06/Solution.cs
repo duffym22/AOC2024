@@ -17,7 +17,7 @@ class Solution : SolutionBase
         //This should only return one item
         List<Point> guardLocation = FindItem(theGrid, '^');
         List<Point> obstacles = FindItem(theGrid, '#');
-        List<Point> traversed = TraverseTheGrid(guardLocation.First(), obstacles);
+        List<Point> traversed = TraverseTheGrid_P1(guardLocation.First(), obstacles);
 
         //Attempt 1: 4559 - CORRECT
         return traversed.Distinct().Count().ToString();
@@ -30,7 +30,14 @@ class Solution : SolutionBase
         //This should only return one item
         List<Point> guardLocation = FindItem(theGrid, '^');
         List<Point> obstacles = FindItem(theGrid, '#');
-        List<Point> traversed = TraverseTheGrid(guardLocation.First(), obstacles);
+
+        List<Point> turningPoints = new();
+        List<Point> traversed = new();
+        TraverseTheGrid_P2(guardLocation.First(), obstacles, out traversed, out turningPoints);
+
+        turningPoints = turningPoints.OrderBy(x => x.X).ToList();
+        var groupedX = turningPoints.OrderBy(x => x.X).GroupBy(x => x.X).ToList();
+        var groupedY = turningPoints.OrderBy(x => x.Y).GroupBy(x => x.Y).ToList();
 
         return traversed.Distinct().Count().ToString();
     }
@@ -53,24 +60,64 @@ class Solution : SolutionBase
         return itemsFound;
     }
 
-    private List<Point> TraverseTheGrid(Point theGuard, List<Point> obstacles)
+    private List<Point> TraverseTheGrid_P1(Point theGuard, List<Point> obstacles)
     {
         bool guardOutside = false;
         DIRECTION directionOfTravel = DIRECTION.UP;
         List<Point> traversedPoints = new List<Point>();
 
-        Point guardNextStep;
         while (guardOutside == false)
         {
             //And add the guards new location to the list of traversed points so long as they are inside
             traversedPoints.Add(theGuard);
 
-            guardNextStep = GuardStep(theGuard, directionOfTravel);
+            Point guardNextStep = GuardStep(theGuard, directionOfTravel);
             //Check if the guard hit an obstacle
             if (ObstacleEncountered(guardNextStep, obstacles))
             {
                 //If an obstacle was encountered, change the direction of travel
                 directionOfTravel = ChangeDirection(directionOfTravel);
+            }
+
+            //Then have the guard step in the direction of travel
+            theGuard = GuardStep(theGuard, directionOfTravel);
+
+            //Check if the guard is outside
+            guardOutside = IsTheGuardOutside(theGuard);
+
+            if (traversedPoints.Distinct().Count() > 16900)
+            {
+                //We've traversed all points - something is wrong
+                return traversedPoints;
+            }
+        }
+
+        return traversedPoints;
+    }
+
+    private List<Point> TraverseTheGrid_P2(Point theGuard, List<Point> obstacles, out List<Point> traversedPoints, out List<Point> turningPoints)
+    {
+        bool guardOutside = false;
+        DIRECTION directionOfTravel = DIRECTION.UP;
+        traversedPoints = new();
+        turningPoints = new();
+
+        while (guardOutside == false)
+        {
+            //And add the guards new location to the list of traversed points so long as they are inside
+            traversedPoints.Add(theGuard);
+
+            Point guardNextStep = GuardStep(theGuard, directionOfTravel);
+            //Check if the guard hit an obstacle
+            if (ObstacleEncountered(guardNextStep, obstacles))
+            {
+                //If an obstacle was encountered, change the direction of travel
+                directionOfTravel = ChangeDirection(directionOfTravel);
+
+                //Because the guard encountered an obstacle,
+                //record the guards current location as a turning point
+                //if the guard has been to this spot before, increment the counter
+                turningPoints.Add(theGuard);
             }
 
             //Then have the guard step in the direction of travel
