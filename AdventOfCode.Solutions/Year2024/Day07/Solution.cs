@@ -30,28 +30,43 @@ class Solution : SolutionBase
 
         Dictionary<long, List<long>> calibrationData = ParseCalibrationData(lines);
         Dictionary<long, bool> validCalibrationData = DetermineCalDataValid(calibrationData, 2);
-        //long totalSum1 = GetFinalCalData(validCalibrationData);
+        long totalSum1 = GetFinalCalData(validCalibrationData);
 
-        ////Get only the invalid calibration data
-        //Dictionary<long, bool> invalidCalibrationData = validCalibrationData.Where(x => x.Value == false).Select(t => new { t.Key, t.Value }).ToDictionary(t => t.Key, t => t.Value);
-        //Dictionary<long, List<long>> calibrationData2 = new();
+        //Get only the invalid calibration data
+        Dictionary<long, bool> invalidCalibrationData = validCalibrationData.Where(x => x.Value == false).Select(t => new { t.Key, t.Value }).ToDictionary(t => t.Key, t => t.Value);
+        Dictionary<long, List<long>> calibrationData2 = new();
 
-        //foreach (var item in invalidCalibrationData.Keys)
-        //{
-        //    calibrationData2.Add(item, calibrationData[item]);
-        //}
+        foreach (var item in invalidCalibrationData.Keys)
+        {
+            calibrationData2.Add(item, calibrationData[item]);
+        }
 
-        ////Now go try concatentating on this data
-        //Dictionary<long, bool> validCalibrationData2 = DetermineCalDataValid(calibrationData2, 3);
-        //long totalSum2 = GetFinalCalData(validCalibrationData2);
+        //Now go try concatentating on this data
+        Dictionary<long, bool> validCalibrationData2 = DetermineCalDataValid(calibrationData2, 3);
+        long totalSum2 = GetFinalCalData(validCalibrationData2);
 
+        Dictionary<long, bool> valid3 = new();
         long sum = 0;
         foreach (long item in calibrationData.Keys)
         {
             long[] numbers = calibrationData[item].ToArray();
-            sum += solve(item, numbers.First(), numbers, 1, 3);
+            long theValue = solve(item, numbers.First(), numbers, 1, 3);
+            valid3.Add(item, theValue.Equals(0) == false);
+            sum += theValue;
         }
 
+        //Only the true items
+        List<long> valid4 = valid3.Where(x => x.Value).Select(x => x.Key).ToList();
+        List<long> valid5 = validCalibrationData.Where(x => x.Value).Select(x => x.Key).ToList();
+        List<long> valid6 = validCalibrationData2.Where(x => x.Value).Select(x => x.Key).ToList();
+        valid5.AddRange(valid6);
+
+
+        //Valid answers not caught:
+        // Line 335: 10728897
+        // Line 372: 1691650192
+        // Line 458: 213283675
+        List<long> exceptions = valid4.Except(valid5).ToList();
 
         //Attempt 1 - 163693637141019 - too low - didn't add the two total sum values together
         //Attempt 2 - 165276235859880 - too low 
@@ -119,12 +134,6 @@ class Solution : SolutionBase
     {
         Dictionary<long, bool> valid = new Dictionary<long, bool>();
 
-        //Default all lines to false
-        foreach (var item in calibrationData)
-        {
-            valid.Add(item.Key, false);
-        }
-
         foreach (long item in calibrationData.Keys)
         {
             List<long> numbers = calibrationData[item];
@@ -136,6 +145,7 @@ class Solution : SolutionBase
             ushort tracker = 0;
             char[] theChars;
             double max = Math.Pow(baseNumber, spaces);
+            valid.Add(item, false);
             for (int i = 0; i < max; i++)
             {
                 theChars = DetermineCharArray(tracker, baseNumber, spaces);
@@ -168,7 +178,7 @@ class Solution : SolutionBase
         operationAnswer = (long)numbers.FirstOrDefault();
         for (int i = 0; i < theChars.Length; i++)
         {
-            switch(theChars[i])
+            switch (theChars[i])
             {
                 case '+':
                     operationAnswer += numbers[i + 1];
@@ -219,7 +229,7 @@ class Solution : SolutionBase
         List<int> numericPositions = new List<int>();
 
         int remainder, quotient = numberToConvert;
-        while(quotient != 0)
+        while (quotient != 0)
         {
             convertToTernary(numberToConvert, baseValue, out quotient, out remainder);
             numberToConvert = quotient;
@@ -241,8 +251,6 @@ class Solution : SolutionBase
 
         //Divide by the base 
         quotient = number / baseValue;
-
-        convertToTernary(quotient, baseValue, out quotient, out remainder);
     }
 
 }
